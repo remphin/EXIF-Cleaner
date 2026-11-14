@@ -1,0 +1,8 @@
+{
+  "name": "EXIF Temizleyici",
+  "description": "Yapay zeka görsellerindeki AI мета verilerini (EXIF, XMP, C2PA, PNG Chunks) tespit eden, otomatik temizleyen ve istediğiniz EXIF bilgisini düzenlemenizi sağlayan minimalist platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
