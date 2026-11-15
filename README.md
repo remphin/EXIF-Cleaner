@@ -20,3 +20,18 @@ All EXIF parsing, AI signature scrubbing (JPEG APP1/APP11 JUMBF, PNG tEXt/iTXt/c
 
 
 <img width="1024" height="506" alt="resim" src="https://github.com/user-attachments/assets/2eb45004-de2e-4013-a6d6-fbe195c29817" />
+
+<h1>NOW!</h1>
+Studio Photo Editor & Format Converter
+
+Apply 10 curated filters, crop & transform, upscale to 4K or 8K, and convert between JPG, PNG, and WebP.
+
+- 10 Curated Color & Film Filters
+- Resolution Upscaler (HD / 2K / 4K / 8K)
+- Universal Format Converter (JPG ↔ PNG ↔ WebP)
+- Crop, Rotate & Flip
+- Light, Color, Clarity & Vignette
+
+  <img width="1250" height="863" alt="resim" src="https://github.com/user-attachments/assets/07279992-528f-4fcc-a178-f8ee0606cbe9" />
+
+<img width="1245" height="772" alt="resim" src="https://github.com/user-attachments/assets/d61fe216-adf9-4721-98c3-883767ccd555" />
