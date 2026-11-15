@@ -4,12 +4,13 @@ import { Translations } from '../utils/i18n';
 interface HeaderProps {
   t: Translations;
   onTriggerUpload: () => void;
+  onOpenPhotoEditor: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ t, onTriggerUpload }) => {
+export const Header: React.FC<HeaderProps> = ({ t, onTriggerUpload, onOpenPhotoEditor }) => {
   return (
     <header className="sticky top-0 z-30 bg-[#F4F8FB]/95 backdrop-blur-sm border-b border-[#D8E6F3]">
-      <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-8 px-6 py-4">
+      <div className="max-w-[1280px] mx-auto flex items-center justify-between gap-6 px-6 py-4">
         {/* Zone 1: Single text element wordmark */}
         <a
           href="#workspace"
@@ -18,16 +19,26 @@ export const Header: React.FC<HeaderProps> = ({ t, onTriggerUpload }) => {
           {t.appName}
         </a>
 
-        {/* Zone 2: 4 concise single-line text navigation links */}
+        {/* Zone 2: Concise single-line text navigation links */}
         <nav
           aria-label="Primary Navigation"
-          className="hidden md:flex items-center gap-7 text-sm font-medium text-[#4A6B88]"
+          className="hidden md:flex items-center gap-6 text-sm font-medium text-[#4A6B88]"
         >
           <a
             href="#workspace"
             className="hover:text-[#0F2537] hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
           >
             {t.navWorkspace}
+          </a>
+          <a
+            href="#photo-editor"
+            onClick={(e) => {
+              e.preventDefault();
+              onOpenPhotoEditor();
+            }}
+            className="hover:text-[#0F2537] hover:underline underline-offset-4 transition-colors whitespace-nowrap shrink-0"
+          >
+            {t.navPhotoEditor}
           </a>
           <a
             href="#how-it-works"

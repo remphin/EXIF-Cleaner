@@ -12,7 +12,10 @@ import {
   CheckCircle2,
   FileImage,
   RefreshCw,
+  Sliders,
+  Shield,
 } from 'lucide-react';
+import heroBannerImg from './assets/images/hero_exif_optical_banner_1794670846357.jpg';
 import { Language, translations } from './utils/i18n';
 import {
   ExifTagItem,
@@ -26,11 +29,22 @@ import {
   inferCategory,
 } from './utils/exifEngine';
 import {
+  PhotoEditState,
+  createDefaultPhotoEditState,
+  computeTargetDimensions,
+  resolveOutputFormat,
+  getFormatMimeAndExt,
+  hasVisualOrFormatChanges,
+  buildCompositeCssFilter,
+  renderEditedImageWithTags,
+} from './utils/photoEditorEngine';
+import {
   SamplePresetId,
   generateSampleImageBinary,
 } from './utils/sampleGenerator';
 import { Header } from './components/Header';
 import { MetadataTable, ActiveTab } from './components/MetadataTable';
+import { PhotoEditorPanel } from './components/PhotoEditorPanel';
 import { InfoSections } from './components/InfoSections';
 
 interface LoadedImageState {
@@ -52,6 +66,12 @@ export default function App() {
   const [originalTags, setOriginalTags] = useState<ExifTagItem[]>([]);
   const [currentTags, setCurrentTags] = useState<ExifTagItem[]>([]);
   const [activeTab, setActiveTab] = useState<ActiveTab>('all');
+  const [workspaceMode, setWorkspaceMode] = useState<'exif' | 'editor'>('exif');
+  const [photoEditState, setPhotoEditState] = useState<PhotoEditState>(() =>
+    createDefaultPhotoEditState(1024, 768)
+  );
+  const [isExporting, setIsExporting] = useState(false);
+  const [heroImgError, setHeroImgError] = useState(false);
   const [selectedProfileId, setSelectedProfileId] = useState<string>(CAMERA_PROFILES[0].id);
   const [statusKey, setStatusKey] = useState<keyof typeof t | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -92,7 +112,9 @@ export default function App() {
         ? 'PNG'
         : mimeType.includes('webp')
         ? 'WEBP'
-        : 'JPEG';
+        : mimeType.includes('jpeg') || mimeType.includes('jpg')
+        ? 'JPEG'
+        : 'UNKNOWN';
 
     setImageState({
       fileName,
@@ -106,6 +128,7 @@ export default function App() {
     });
     setOriginalTags(parsed.tags.map((item) => ({ ...item })));
     setCurrentTags(parsed.tags.map((item) => ({ ...item })));
+    setPhotoEditState(createDefaultPhotoEditState(width, height));
     setActiveTab('all');
   };
 
@@ -203,55 +226,117 @@ export default function App() {
     showToast('toastTagAdded');
   };
 
-  const buildCleanedBinary = (): { bytes: Uint8Array; mimeType: string; outName: string } | null => {
+  const buildExportBinary = async (): Promise<{
+    bytes: Uint8Array;
+    mimeType: string;
+    outName: string;
+    previewUrl: string;
+    width: number;
+    height: number;
+  } | null> => {
     if (!imageState) return null;
+    const baseName = imageState.fileName.replace(/\.[^.]+$/, '');
+
+    if (hasVisualOrFormatChanges(photoEditState, imageState.format)) {
+      const rendered = await renderEditedImageWithTags(
+        imageState.previewUrl,
+        imageState.format,
+        photoEditState,
+        currentTags
+      );
+      const blob = new Blob([rendered.bytes as unknown as BlobPart], { type: rendered.mimeType });
+      const newPreviewUrl = URL.createObjectURL(blob);
+      return {
+        bytes: rendered.bytes,
+        mimeType: rendered.mimeType,
+        outName: `${baseName}_edited.${rendered.extension}`,
+        previewUrl: newPreviewUrl,
+        width: rendered.width,
+        height: rendered.height,
+      };
+    }
+
+    const outFormat = resolveOutputFormat(photoEditState.outputFormat, imageState.format);
     const outBytes = writeImageBinaryWithTags(
       imageState.originalBytes,
       imageState.format,
       currentTags
     );
-    const baseName = imageState.fileName.replace(/\.[^.]+$/, '');
-    const ext = imageState.format === 'PNG' ? 'png' : 'jpg';
-    const mimeType = imageState.format === 'PNG' ? 'image/png' : 'image/jpeg';
+    const { mimeType, extension } = getFormatMimeAndExt(outFormat);
     return {
       bytes: outBytes,
       mimeType,
-      outName: `${baseName}_cleaned.${ext}`,
+      outName: `${baseName}_cleaned.${extension}`,
+      previewUrl: imageState.previewUrl,
+      width: imageState.width,
+      height: imageState.height,
     };
   };
 
-  const handleDownloadCleaned = () => {
-    const built = buildCleanedBinary();
-    if (!built) return;
+  const handleDownloadCleaned = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const built = await buildExportBinary();
+      if (!built) return;
 
-    const blob = new Blob([built.bytes as unknown as BlobPart], { type: built.mimeType });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = built.outName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 3000);
-    showToast('toastDownloaded');
+      const blob = new Blob([built.bytes as unknown as BlobPart], { type: built.mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = built.outName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+      showToast('toastDownloaded');
+    } finally {
+      setIsExporting(false);
+    }
   };
 
-  const handleVerifyReupload = () => {
-    const built = buildCleanedBinary();
-    if (!built || !imageState) return;
-    loadFromBinary(
-      built.bytes,
-      built.outName,
-      built.mimeType,
-      imageState.previewUrl,
-      imageState.width,
-      imageState.height
-    );
-    showToast('toastAutoCleaned');
+  const handleVerifyReupload = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    try {
+      const built = await buildExportBinary();
+      if (!built) return;
+      loadFromBinary(
+        built.bytes,
+        built.outName,
+        built.mimeType,
+        built.previewUrl,
+        built.width,
+        built.height
+      );
+      showToast('toastAutoCleaned');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleResetPhotoEdits = () => {
+    if (!imageState) return;
+    setPhotoEditState(createDefaultPhotoEditState(imageState.width, imageState.height));
+    showToast('toastPhotoReset');
+  };
+
+  const handleOpenPhotoEditor = () => {
+    setWorkspaceMode('editor');
+    const targetEl =
+      document.getElementById('photo-editor') || document.getElementById('workspace');
+    targetEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   const aiTracesCount = currentTags.filter((item) => item.isAiTrace || item.category === 'ai').length;
   const formatKb = (bytes: number) => `${(bytes / 1024).toFixed(1)} KB`;
+  const hasPhotoChanges = imageState ? hasVisualOrFormatChanges(photoEditState, imageState.format) : false;
+  const targetDims = imageState
+    ? computeTargetDimensions(imageState.width, imageState.height, photoEditState)
+    : null;
+  const targetFormat = imageState
+    ? resolveOutputFormat(photoEditState.outputFormat, imageState.format)
+    : 'JPEG';
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F4F8FB] text-[#0F2537]">
@@ -259,7 +344,7 @@ export default function App() {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+        accept="image/*,.jpg,.jpeg,.png,.webp,.gif,.bmp,.avif"
         aria-label={t.selectFileBtn}
         onChange={(e) => {
           const f = e.target.files?.[0];
@@ -273,6 +358,7 @@ export default function App() {
       <Header
         t={t}
         onTriggerUpload={() => fileInputRef.current?.click()}
+        onOpenPhotoEditor={handleOpenPhotoEditor}
       />
 
       {/* Main Content Container */}
@@ -353,21 +439,24 @@ export default function App() {
             </div>
           </div>
 
-          {/* Right Column: High-Fidelity Optical Camera Lens Banner with Measured Scrim */}
+          {/* Right Column: High-Fidelity Optical Camera Lens Banner with Bundled Asset Import */}
           <div className="lg:col-span-5 relative min-h-[240px] lg:min-h-full bg-[#162C42] overflow-hidden">
-            <img
-              src="/src/assets/images/hero_exif_optical_banner_1794670846357.jpg"
-              alt={
-                lang === 'tr'
-                  ? 'Optik kamera lensi ve EXIF meta veri analizi'
-                  : 'Precision optical camera lens and EXIF metadata analysis'
-              }
-              referrerPolicy="no-referrer"
-              className="w-full h-full lg:h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = 'none';
-              }}
-            />
+            {!heroImgError ? (
+              <img
+                src={heroBannerImg}
+                alt={
+                  lang === 'tr'
+                    ? 'Optik kamera lensi ve EXIF meta veri analizi'
+                    : 'Precision optical camera lens and EXIF metadata analysis'
+                }
+                className="w-full h-full object-cover"
+                onError={() => setHeroImgError(true)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#0F2537] via-[#173A58] to-[#0A1929]">
+                <Camera className="w-16 h-16 text-sky-400/60" />
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-t from-[#091929]/85 via-[#091929]/25 to-transparent flex flex-col justify-end p-5">
               <div className="text-xs font-semibold text-white mb-1">
                 {lang === 'tr'
@@ -411,7 +500,7 @@ export default function App() {
         )}
 
         {/* Quick Sample Selector Bar (always accessible for testing & comparison) */}
-        <div className="mb-8 bg-white border border-[#D8E6F3] rounded-xl p-5">
+        <div id="photo-editor" className="scroll-mt-24 mb-8 bg-white border border-[#D8E6F3] rounded-xl p-5">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
               <h2 className="text-xs font-semibold text-[#0F2537] mb-1">
@@ -496,7 +585,17 @@ export default function App() {
                       src={imageState.previewUrl}
                       alt={imageState.fileName}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-[filter] duration-150"
+                      style={{
+                        filter: buildCompositeCssFilter(photoEditState),
+                        transform: [
+                          photoEditState.rotation !== 0 ? `rotate(${photoEditState.rotation}deg)` : '',
+                          photoEditState.flipH ? 'scaleX(-1)' : '',
+                          photoEditState.flipV ? 'scaleY(-1)' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ') || 'none',
+                      }}
                     />
                   ) : (
                     <FileImage className="w-10 h-10 text-sky-300" />
@@ -510,10 +609,15 @@ export default function App() {
                       {imageState.fileName}
                     </h3>
                     <div className="flex flex-wrap items-center gap-1.5 text-xs text-[#4A6B88] font-mono tabular-nums mt-1">
-                      <span>{imageState.format}</span>
+                      <span>
+                        {imageState.format}
+                        {hasPhotoChanges && targetFormat !== imageState.format ? ` → ${targetFormat}` : ''}
+                      </span>
                       <span aria-hidden="true">·</span>
                       <span>
-                        {imageState.width} × {imageState.height} px
+                        {hasPhotoChanges && targetDims
+                          ? `${targetDims.width} × ${targetDims.height} px`
+                          : `${imageState.width} × ${imageState.height} px`}
                       </span>
                       <span aria-hidden="true">·</span>
                       <span>{formatKb(imageState.byteSize)}</span>
@@ -622,20 +726,26 @@ export default function App() {
               <div className="bg-white border border-[#D8E6F3] rounded-xl p-5 space-y-3">
                 <button
                   type="button"
+                  disabled={isExporting}
                   onClick={handleDownloadCleaned}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#0F2537] hover:bg-[#1B3B56] rounded-lg transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#0F2537] hover:bg-[#1B3B56] disabled:opacity-60 rounded-lg transition-colors cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  <span>{t.downloadCleanBtn}</span>
+                  <span>
+                    {isExporting
+                      ? t.editorProcessingBtn
+                      : `${t.downloadCleanBtn} (${targetFormat})`}
+                  </span>
                 </button>
 
                 <button
                   type="button"
+                  disabled={isExporting}
                   onClick={handleVerifyReupload}
                   title={t.verifyReuploadHint}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-sky-800 bg-[#F2F8FD] hover:bg-[#E2EFFB] border border-[#C5D9EC] rounded-lg transition-colors cursor-pointer"
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold text-sky-800 bg-[#F2F8FD] hover:bg-[#E2EFFB] disabled:opacity-60 border border-[#C5D9EC] rounded-lg transition-colors cursor-pointer"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isExporting ? 'animate-spin' : ''}`} />
                   <span>{t.verifyReuploadBtn}</span>
                 </button>
 
@@ -660,18 +770,68 @@ export default function App() {
               </div>
             </div>
 
-            {/* Right Column: Interactive EXIF / Metadata Table & Editor (8 cols) */}
-            <div className="lg:col-span-8">
-              <MetadataTable
-                t={t}
-                originalTags={originalTags}
-                currentTags={currentTags}
-                activeTab={activeTab}
-                setActiveTab={setActiveTab}
-                onUpdateTag={handleUpdateTag}
-                onDeleteTag={handleDeleteTag}
-                onAddTag={handleAddTag}
-              />
+            {/* Right Column: Workspace Mode Switcher + EXIF Table OR Photo Editor & Format Converter (8 cols) */}
+            <div className="lg:col-span-8 space-y-4">
+              <div
+                role="tablist"
+                aria-label="Workspace Mode"
+                className="inline-flex items-center p-1 bg-[#E3EFFA] border border-[#C8DDF0] rounded-xl"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={workspaceMode === 'exif'}
+                  onClick={() => setWorkspaceMode('exif')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    workspaceMode === 'exif'
+                      ? 'bg-white text-[#0F2537] shadow-xs'
+                      : 'text-[#4A6B88] hover:text-[#0F2537]'
+                  }`}
+                >
+                  <Shield className="w-3.5 h-3.5 text-sky-700" />
+                  <span>{t.modeExifTab}</span>
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={workspaceMode === 'editor'}
+                  onClick={() => setWorkspaceMode('editor')}
+                  className={`inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                    workspaceMode === 'editor'
+                      ? 'bg-white text-[#0F2537] shadow-xs'
+                      : 'text-[#4A6B88] hover:text-[#0F2537]'
+                  }`}
+                >
+                  <Sliders className="w-3.5 h-3.5 text-sky-700" />
+                  <span>{t.modePhotoEditorTab}</span>
+                </button>
+              </div>
+
+              {workspaceMode === 'exif' ? (
+                <MetadataTable
+                  t={t}
+                  originalTags={originalTags}
+                  currentTags={currentTags}
+                  activeTab={activeTab}
+                  setActiveTab={setActiveTab}
+                  onUpdateTag={handleUpdateTag}
+                  onDeleteTag={handleDeleteTag}
+                  onAddTag={handleAddTag}
+                />
+              ) : (
+                <PhotoEditorPanel
+                  t={t}
+                  lang={lang}
+                  previewUrl={imageState.previewUrl}
+                  fileName={imageState.fileName}
+                  srcWidth={imageState.width}
+                  srcHeight={imageState.height}
+                  originalFormat={imageState.format}
+                  editState={photoEditState}
+                  onChange={setPhotoEditState}
+                  onReset={handleResetPhotoEdits}
+                />
+              )}
             </div>
           </div>
         )}

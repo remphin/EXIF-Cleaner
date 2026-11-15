@@ -3,6 +3,7 @@ export type Language = 'tr' | 'en';
 export interface Translations {
   appName: string;
   navWorkspace: string;
+  navPhotoEditor: string;
   navHowItWorks: string;
   navAiSignatures: string;
   navPrivacy: string;
@@ -101,12 +102,55 @@ export interface Translations {
   toastDownloaded: string;
   verifyReuploadBtn: string;
   verifyReuploadHint: string;
+  modeExifTab: string;
+  modePhotoEditorTab: string;
+  editorTitle: string;
+  editorSubtitle: string;
+  editorResetBtn: string;
+  editorCompareBefore: string;
+  editorCompareAfter: string;
+  editorFiltersTitle: string;
+  editorTransformCropTitle: string;
+  editorRotateLeft: string;
+  editorRotateRight: string;
+  editorFlipH: string;
+  editorFlipV: string;
+  editorCropAspectLabel: string;
+  editorCropFree: string;
+  editorCropReset: string;
+  editorCropManualHint: string;
+  editorCropX: string;
+  editorCropY: string;
+  editorCropW: string;
+  editorCropH: string;
+  editorAdjustmentsTitle: string;
+  editorBrightness: string;
+  editorContrast: string;
+  editorSaturation: string;
+  editorSharpness: string;
+  editorVignette: string;
+  editorBlur: string;
+  editorUpscaleTitle: string;
+  editorUpscaleHint: string;
+  editorTargetDimsLabel: string;
+  editorCustomWidth: string;
+  editorCustomHeight: string;
+  editorLockRatio: string;
+  editorFormatTitle: string;
+  editorFormatHint: string;
+  editorFormatOriginal: string;
+  editorQualityLabel: string;
+  editorProcessingBtn: string;
+  toastPhotoReset: string;
+  step4Title: string;
+  step4Desc: string;
 }
 
 export const translations: Record<Language, Translations> = {
   tr: {
     appName: 'EXIF Temizleyici',
     navWorkspace: 'Çalışma Alanı',
+    navPhotoEditor: 'Fotoğraf Editörü',
     navHowItWorks: 'Nasıl Çalışır',
     navAiSignatures: 'AI İmzaları',
     navPrivacy: 'Gizlilik',
@@ -118,8 +162,8 @@ export const translations: Record<Language, Translations> = {
     heroExtraNote:
       'EXIF Temizleyici ile sadece yapay zeka görsellerini değil, herhangi bir cihazla çekilen görsellerinizdeki EXIF bilgilerini de değiştirebilirsiniz.',
     dropzoneTitle: 'Görselinizi buraya sürükleyin veya dosya seçin',
-    dropzoneSubtitle: 'JPEG, PNG ve WebP dosyalarındaki EXIF, XMP, IPTC, C2PA ve PNG metin bloklarını okur ve düzenler.',
-    dropzoneFormats: 'Desteklenen formatlar: JPG, JPEG, PNG, WEBP · Maksimum 50 MB',
+    dropzoneSubtitle: 'JPEG, PNG, WebP, GIF, BMP ve AVIF görsellerindeki EXIF, XMP, IPTC, C2PA bloklarını okur, düzenler ve dönüştürür.',
+    dropzoneFormats: 'Desteklenen formatlar: JPG, PNG, WEBP, GIF, BMP, AVIF · Çıktı: JPG / PNG / WebP · Maks. 50 MB',
     selectFileBtn: 'Bilgisayardan Görsel Seç',
     orTrySample: 'Hemen test etmek için gerçek AI meta verili örnek bir görsel yükleyin:',
     sampleMidjourney: 'Midjourney v6.1 Örneği',
@@ -191,9 +235,9 @@ export const translations: Record<Language, Translations> = {
     step2Title: '02. Otomatik veya Özel Düzenleme',
     step2Desc:
       'Tek tıkla tüm AI üretim izlerini (Prompt, Seed, ComfyUI düğümleri, C2PA manifestosu) silin veya istediğiniz etiketi elle değiştirin.',
-    step3Title: '03. Yeniden Paketleme ve İndirme',
+    step3Title: '04. Yeniden Paketleme ve İndirme',
     step3Desc:
-      'Düzenlenen EXIF alanları gerçek TIFF/EXIF binary başlığına dönüştürülerek görüntü kalitesi bozulmadan indirilir.',
+      'Düzenlenen EXIF alanları gerçek TIFF/EXIF binary başlığına dönüştürülerek seçtiğiniz formatta indirilir.',
     supportedSignaturesTitle: 'Tespit Edilen ve Temizlenen Yapay Zeka İmzaları',
     supportedSignaturesDesc:
       'Platformumuz aşağıdaki üretken yapay zeka araçlarının bıraktığı görünmez meta veri izlerini otomatik olarak tanır:',
@@ -213,10 +257,54 @@ export const translations: Record<Language, Translations> = {
     toastDownloaded: 'Temizlenmiş görsel yeni EXIF verileriyle indirildi.',
     verifyReuploadBtn: 'Çıktıyı Doğrula (Yeniden Oku)',
     verifyReuploadHint: 'Oluşturulan binary dosyayı tekrar okuyarak AI izlerinin silindiğini kanıtlar',
+    modeExifTab: 'EXIF & AI Temizleyici',
+    modePhotoEditorTab: 'Fotoğraf Editörü & Dönüştürücü',
+    editorTitle: 'Stüdyo Fotoğraf Editörü & Format Dönüştürücü',
+    editorSubtitle: '10 farklı filtre uygulayın, görseli kırpın, 4K/8K çözünürlüğe yükseltin ve JPG / PNG / WebP arasında dönüştürün.',
+    editorResetBtn: 'Görsel Düzenlemeleri Sıfırla',
+    editorCompareBefore: 'Orijinali Gör (Önce)',
+    editorCompareAfter: 'Düzenlenmiş (Sonra)',
+    editorFiltersTitle: '10 Hazır Renk & Film Filtresi',
+    editorTransformCropTitle: 'Kırpma, Döndürme ve Yönlendirme',
+    editorRotateLeft: '90° Sola',
+    editorRotateRight: '90° Sağa',
+    editorFlipH: 'Yatay Çevir',
+    editorFlipV: 'Dikey Çevir',
+    editorCropAspectLabel: 'Kırpma Oranı',
+    editorCropFree: 'Serbest',
+    editorCropReset: 'Kırpmayı Sıfırla',
+    editorCropManualHint: 'Önizleme üzerindeki kırpma çerçevesini sürükleyin veya yüzdeleri ayarlayın:',
+    editorCropX: 'Sol %',
+    editorCropY: 'Üst %',
+    editorCropW: 'Genişlik %',
+    editorCropH: 'Yükseklik %',
+    editorAdjustmentsTitle: 'Işık, Renk, Netlik & Vinyet Ayarları',
+    editorBrightness: 'Parlaklık',
+    editorContrast: 'Kontrast',
+    editorSaturation: 'Doygunluk',
+    editorSharpness: 'Keskinleştirme',
+    editorVignette: 'Vinyet',
+    editorBlur: 'Yumuşatma (Blur)',
+    editorUpscaleTitle: 'Çözünürlük Yükseltme (HD / 2K / 4K / 8K)',
+    editorUpscaleHint: 'Çok aşamalı yüksek kaliteli örnekleme ile görsel boyutunu kayıpsız orantıyla büyütün.',
+    editorTargetDimsLabel: 'Hedef Çıktı Boyutu',
+    editorCustomWidth: 'Genişlik (px)',
+    editorCustomHeight: 'Yükseklik (px)',
+    editorLockRatio: 'Oranı Koru',
+    editorFormatTitle: 'Format Dönüştürücü (JPG ↔ PNG ↔ WebP)',
+    editorFormatHint: 'Yüklediğiniz görseli istediğiniz formata çevirin; düzenlenmiş EXIF verileriniz yeni formata otomatik işlenir.',
+    editorFormatOriginal: 'Orijinal Format',
+    editorQualityLabel: 'Çıktı Kalitesi',
+    editorProcessingBtn: 'Görsel İşleniyor...',
+    toastPhotoReset: 'Fotoğraf editörü ayarları sıfırlandı.',
+    step4Title: '03. Editör, 4K/8K & Format Dönüşümü',
+    step4Desc:
+      'Görselinizi kırpıp 10 filtreden birini uygulayın, 4K veya 8K çözünürlüğe yükseltin ve JPG, PNG ya da WebP olarak indirin.',
   },
   en: {
     appName: 'EXIF Cleaner',
     navWorkspace: 'Workspace',
+    navPhotoEditor: 'Photo Editor',
     navHowItWorks: 'How It Works',
     navAiSignatures: 'AI Signatures',
     navPrivacy: 'Privacy',
@@ -228,8 +316,8 @@ export const translations: Record<Language, Translations> = {
     heroExtraNote:
       'With EXIF Cleaner, you can also modify and customize EXIF metadata on standard photos captured with any camera or device.',
     dropzoneTitle: 'Drag and drop your image here, or browse files',
-    dropzoneSubtitle: 'Reads and edits EXIF, XMP, IPTC, C2PA, and PNG text chunks in JPEG, PNG, and WebP files.',
-    dropzoneFormats: 'Supported formats: JPG, JPEG, PNG, WEBP · Max 50 MB',
+    dropzoneSubtitle: 'Reads, edits, and converts EXIF, XMP, IPTC, C2PA, and text chunks across JPEG, PNG, WebP, GIF, BMP, and AVIF.',
+    dropzoneFormats: 'Supported uploads: JPG, PNG, WEBP, GIF, BMP, AVIF · Export: JPG / PNG / WebP · Max 50 MB',
     selectFileBtn: 'Choose Image from Device',
     orTrySample: 'Or load a sample image with real embedded AI metadata to test immediately:',
     sampleMidjourney: 'Midjourney v6.1 Sample',
@@ -301,9 +389,9 @@ export const translations: Record<Language, Translations> = {
     step2Title: '02. Auto-Scrub or Custom Edit',
     step2Desc:
       'Remove all AI generation traces (Prompts, Seeds, ComfyUI workflows, C2PA manifests) in one click, or edit any tag inline.',
-    step3Title: '03. Binary Repackaging & Export',
+    step3Title: '04. Binary Repackaging & Export',
     step3Desc:
-      'Edited EXIF fields are serialized into a genuine binary TIFF/EXIF header and written to the downloadable image.',
+      'Edited EXIF fields are serialized into a genuine binary TIFF/EXIF header and exported in your chosen format.',
     supportedSignaturesTitle: 'Detected & Scrubbed AI Signatures',
     supportedSignaturesDesc:
       'Our engine automatically identifies and strips invisible metadata footprints left by generative AI tools:',
@@ -323,5 +411,48 @@ export const translations: Record<Language, Translations> = {
     toastDownloaded: 'Cleaned image downloaded with updated binary EXIF.',
     verifyReuploadBtn: 'Verify Output Binary (Re-parse)',
     verifyReuploadHint: 'Re-parses the generated output binary to prove AI traces are completely gone',
+    modeExifTab: 'EXIF & AI Cleaner',
+    modePhotoEditorTab: 'Photo Editor & Converter',
+    editorTitle: 'Studio Photo Editor & Format Converter',
+    editorSubtitle: 'Apply 10 curated filters, crop & transform, upscale to 4K or 8K, and convert between JPG, PNG, and WebP.',
+    editorResetBtn: 'Reset Photo Edits',
+    editorCompareBefore: 'Hold / View Original',
+    editorCompareAfter: 'Edited Preview',
+    editorFiltersTitle: '10 Curated Color & Film Filters',
+    editorTransformCropTitle: 'Crop, Rotate & Flip',
+    editorRotateLeft: 'Rotate -90°',
+    editorRotateRight: 'Rotate +90°',
+    editorFlipH: 'Flip H',
+    editorFlipV: 'Flip V',
+    editorCropAspectLabel: 'Crop Aspect Ratio',
+    editorCropFree: 'Free',
+    editorCropReset: 'Reset Crop',
+    editorCropManualHint: 'Drag the crop frame on the preview or fine-tune percentages:',
+    editorCropX: 'Left %',
+    editorCropY: 'Top %',
+    editorCropW: 'Width %',
+    editorCropH: 'Height %',
+    editorAdjustmentsTitle: 'Light, Color, Clarity & Vignette',
+    editorBrightness: 'Brightness',
+    editorContrast: 'Contrast',
+    editorSaturation: 'Saturation',
+    editorSharpness: 'Smart Sharpen',
+    editorVignette: 'Vignette',
+    editorBlur: 'Soft Blur',
+    editorUpscaleTitle: 'Resolution Upscaler (HD / 2K / 4K / 8K)',
+    editorUpscaleHint: 'Multi-pass high-quality resampling scales your image proportionally up to 4K or 8K UHD.',
+    editorTargetDimsLabel: 'Target Output Dimensions',
+    editorCustomWidth: 'Width (px)',
+    editorCustomHeight: 'Height (px)',
+    editorLockRatio: 'Lock Aspect',
+    editorFormatTitle: 'Universal Format Converter (JPG ↔ PNG ↔ WebP)',
+    editorFormatHint: 'Convert your uploaded image into any target format while embedding your cleaned or custom EXIF tags.',
+    editorFormatOriginal: 'Keep Original',
+    editorQualityLabel: 'Output Quality',
+    editorProcessingBtn: 'Rendering Output...',
+    toastPhotoReset: 'Photo editor adjustments reset to original.',
+    step4Title: '03. Studio Editor, 4K/8K & Convert',
+    step4Desc:
+      'Crop, apply 10 curated filters, upscale to 4K or 8K UHD, and export in JPG, PNG, or WebP with clean EXIF.',
   },
 };
